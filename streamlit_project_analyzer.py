@@ -35,35 +35,52 @@ if uploaded_file:
             df["Labor Days Needed"] = df["Quantity / الكمية"] / df["Productivity / إنتاجية العامل"]
             df["Workers Needed"] = (df["Labor Days Needed"] / df["Duration (days) / المدة"]).apply(math.ceil)
             df["Total Labor Cost"] = df["Labor Days Needed"] * df["Labor Cost per Day / تكلفة العامل لليوم"]
-
             df["Total Material Needed"] = df["Quantity / الكمية"] * df["Material Rate / معدل استهلاك المادة لكل وحدة"]
             df["Total Material Cost"] = df["Total Material Needed"] * df["Material Cost per Unit / تكلفة المادة"]
-
             df["Total Cost"] = df["Total Labor Cost"] + df["Total Material Cost"]
             df["Start Day"] = df["Duration (days) / المدة"].cumsum().shift(fill_value=1)
             df["End Day"] = df["Start Day"] + df["Duration (days) / المدة"] - 1
 
-            st.success("✅ تم تحليل الملف بنجاح. النتائج التالية تم توليدها:")
-            st.dataframe(df[[
-                "Work Item / بند العمل", "Quantity / الكمية", "Unit / الوحدة",
-                "Labor Type / نوع العمالة", "Workers Needed", "Duration (days) / المدة",
-                "Material / المادة المطلوبة", "Total Material Needed",
-                "Total Labor Cost", "Total Material Cost", "Total Cost",
-                "Start Day", "End Day"
-            ]])
+            st.success("✅ تم تحليل الملف بنجاح")
+
+            st.subheader("📋 خطة الجدول الزمني")
+            st.dataframe(df[["Work Item / بند العمل", "Start Day", "End Day", "Duration (days) / المدة"]])
+
+            st.subheader("👷 خطة الموارد (العمالة)")
+            labor_plan = df.groupby("Labor Type / نوع العمالة").agg({
+                "Workers Needed": "sum",
+                "Labor Days Needed": "sum",
+                "Total Labor Cost": "sum"
+            }).reset_index()
+            st.dataframe(labor_plan)
+
+            st.subheader("🧱 خطة المشتريات (المواد)")
+            procurement_plan = df.groupby("Material / المادة المطلوبة").agg({
+                "Total Material Needed": "sum",
+                "Total Material Cost": "sum"
+            }).reset_index()
+            st.dataframe(procurement_plan)
+
+            st.subheader("💰 خطة الميزانية")
+            budget_plan = df[["Work Item / بند العمل", "Total Labor Cost", "Total Material Cost", "Total Cost"]]
+            st.dataframe(budget_plan)
 
             @st.cache_data
-            def convert_df(df):
+            def convert_to_excel():
                 output = io.BytesIO()
                 with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-                    df.to_excel(writer, index=False)
+                    df.to_excel(writer, sheet_name="Raw Data", index=False)
+                    labor_plan.to_excel(writer, sheet_name="Resource Plan", index=False)
+                    procurement_plan.to_excel(writer, sheet_name="Procurement Plan", index=False)
+                    budget_plan.to_excel(writer, sheet_name="Budget Plan", index=False)
+                    df[["Work Item / بند العمل", "Start Day", "End Day", "Duration (days) / المدة"]].to_excel(writer, sheet_name="Schedule", index=False)
                 return output.getvalue()
 
-            excel = convert_df(df)
+            excel_data = convert_to_excel()
             st.download_button(
-                label="📥 تحميل خطة المشروع (Excel)",
-                data=excel,
-                file_name="Full_Project_Plan.xlsx",
+                label="📥 تحميل الخطة الكاملة (Excel)",
+                data=excel_data,
+                file_name="Complete_Project_Plan.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
 
