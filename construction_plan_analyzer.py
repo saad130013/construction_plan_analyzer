@@ -2,6 +2,7 @@
 import streamlit as st
 import pandas as pd
 import math
+import io
 
 st.title("📊 تحليل خطة المقاولات الذكية")
 
@@ -24,7 +25,11 @@ if uploaded_file:
 
     @st.cache_data
     def convert_df(df):
-        return df.to_excel(index=False, engine='xlsxwriter')
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df.to_excel(writer, index=False)
+        processed_data = output.getvalue()
+        return processed_data
 
     excel = convert_df(df)
     st.download_button(
