@@ -1,21 +1,29 @@
-# Streamlit Project Analyzer
+# Construction Project Analyzer (Streamlit App)
 
-📊 A smart tool to analyze construction project BOQ and generate:
-- Full execution plan
-- Labor needs
-- Material consumption
-- Budget and scheduling
+📊 This Streamlit app allows you to upload a construction BOQ Excel file and automatically generate:
+- Labor plan
+- Material requirements
+- Cost estimation (labor + material)
+- Execution schedule
 
-## How to Use
+## How to Run Locally
 
-1. Install requirements:
-```
+```bash
 pip install -r requirements.txt
+streamlit run streamlit_project_analyzer_checked.py
 ```
 
-2. Run the app:
-```
-streamlit run streamlit_project_analyzer.py
-```
+## Excel File Format Required
 
-3. Upload your BOQ Excel file and get a full project plan.
+The uploaded Excel file must include the following columns (exact names):
+
+- Work Item / بند العمل
+- Unit / الوحدة
+- Quantity / الكمية
+- Duration (days) / المدة
+- Labor Type / نوع العمالة
+- Productivity / إنتاجية العامل
+- Material / المادة المطلوبة
+- Material Rate / معدل استهلاك المادة لكل وحدة
+- Material Cost per Unit / تكلفة المادة
+- Labor Cost per Day / تكلفة العامل لليوم
